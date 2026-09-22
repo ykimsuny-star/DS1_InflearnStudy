@@ -70,6 +70,7 @@ git lfs pull
 - Game/Editor 빌드 타깃에 `BuildSettingsVersion.V7`과 `EngineIncludeOrderVersion.Unreal5_8`을 적용했습니다.
 - `UUserWidget` 기반 공개 헤더가 사용하는 `UMG` 모듈을 명시적으로 추가했습니다.
 - 2026-09-23: Unreal Engine 5.8.2에서 `DS1Editor / Win64 / Development` C++ 빌드 성공.
+- 2026-09-23: `CompileAllBlueprints` 검사 성공 — 컴파일 오류 0건, 경고 0건, 로드 실패 0건.
 
 에셋 일괄 재저장은 수행하지 않았습니다. 에디터에서 수정하고 저장하는 에셋부터 5.8 형식으로 저장됩니다. 플레이 동작은 에디터에서 별도로 확인해야 합니다.
 
