@@ -1,0 +1,40 @@
+# Unreal generated files, including project plugins
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Local IDE files and generated solutions
+.vs/
+.idea/
+.vscode/
+*.sln
+*.slnx
+*.suo
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.opendb
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.code-workspace
+
+# Local editor content
+/Content/Developers/
+/Content/Collections/
+
+# Local tooling and secrets
+/.codex/
+/.agents/
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Keep Config, Source, Content, Build resources and .uproject files.
+# World Partition __ExternalActors__ / __ExternalObjects__ are source assets.
