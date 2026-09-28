@@ -1,0 +1,47 @@
+# Unreal generated files, including project plugins
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Local IDE files and generated solutions
+.vs/
+.idea/
+.vscode/
+*.sln
+*.slnx
+*.suo
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.opendb
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.code-workspace
+
+# Local editor content
+/Content/Developers/
+/Content/Collections/
+
+# Study policy (2026-09-28): large binary assets stay LOCAL only.
+# Lecture zip is the source of truth. Keeps GitHub LFS (1GB free) from overflowing.
+# Needed locally for study (e.g. Weapons for DS1CombatComponent), just not pushed.
+/Content/Characters/
+/Content/_Assets/
+/Content/LevelPrototyping/
+
+# Local tooling and secrets
+/.codex/
+/.agents/
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Keep Config, Source, Content, Build resources and .uproject files.
+# World Partition __ExternalActors__ / __ExternalObjects__ are source assets.
