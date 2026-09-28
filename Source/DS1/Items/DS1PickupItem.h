@@ -23,8 +23,14 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 	
-	virtual void Interact(AActor* Interactor) override;
+	virtual void OnConstruction(const FTransform& Transform) override;
+	
+	virtual void Interact(AActor* InteractionActor) override;
 
+public:
+	FORCEINLINE void SetEquipmentClass(const TSubclassOf<ADS1Equipment>& NewEquipmentClass) { EquipmentClass = NewEquipmentClass; };
+	/** 기존에 블루프린트 클래스에서 무기클래스를 설정할수 있게 만들어져 있는데, 이것을 C++ 코드에서 설정할 수 있도록 만들어 주는 함수 */
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Item")
 	UStaticMeshComponent* Mesh; //외형을 표시해줄 스태틱 메시의 컴포넌트 제작
