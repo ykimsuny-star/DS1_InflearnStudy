@@ -34,6 +34,6 @@ protected:
 	 * 함수로 만들어서 처리를 하게되면, 장비가 아닌 수많은 오브젝트 마다마다 처리해주는 코드를 입력하게 되기에, 관리하기 복잡해짐.
 	 */
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Item")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item")
 	TSubclassOf<ADS1Equipment> EquipmentClass;
 };
