@@ -44,6 +44,7 @@ void ADS1Equipment::UnequipItem() //자식인 Weapon.h 에서 구현 할 예정�
 {
 }
 
+/* 가지고 온 캐릭터 스켈레탈 메시의 특정 소켓에 장비 아이템을 장착을 해주는 코드 */
 void ADS1Equipment::AttachToOwner(FName SocketName)
 {
 	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner())) //GetOwner 함수로 캐릭터를 가져옴
@@ -51,7 +52,7 @@ void ADS1Equipment::AttachToOwner(FName SocketName)
 		if (USkeletalMeshComponent* CharacterMesh = OwnerCharacter->GetMesh()) //캐릭터의 스켈레탈 메시 컴포넌트를 가지고 옴
 		{
 			AttachToComponent(CharacterMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), SocketName); 
-		} // 가지고 온 캐릭터 스켈레탈 메시의 특정 소켓에 장비 아이템을 장착을 해주는 코드
+		} 
 	}
 }
 

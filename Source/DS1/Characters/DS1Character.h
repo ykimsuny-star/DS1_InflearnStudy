@@ -49,13 +49,18 @@ private:
 	/** 캐릭터의 각종 스탯 관리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	UDS1AttributeComponent* AttributeComponent;
-
+	
+	/* 캐릭터의 상태 관리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	UDS1StateComponent* StateComponent;
 	
 	/** 무기, 전투 관리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	UDS1CombatComponent* CombatComponent;
+	
+	/* 전투 활성화/비활성화 토글 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* ToggleCombatAction;
 	
 // UI Section
 protected:
@@ -97,6 +102,9 @@ public:
 protected:
 	/** 캐릭터가 이동중인지 체크 */
 	bool IsMoving() const;
+	
+	/** 토글전환 가능한 상태인지? */
+	bool CanToggleCombat() const;
 
 	/** 이동 */
 	void Move(const FInputActionValue& Values);
@@ -110,5 +118,7 @@ protected:
 	void Rolling();
 	/** 인터렉션(상호작용) */
 	void Interact();
+	/** 전투상태 전환 */
+	void ToggleCombat();
 
 };

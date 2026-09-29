@@ -53,3 +53,12 @@ void UDS1AnimInstance::AnimNotify_ResetMovementInput()
         LocalCharacter->GetStateComponent()->ToggleMovementInput(true);
     }
 }
+
+void UDS1AnimInstance::AnimNotify_ResetState()
+{
+    if (const ADS1Character* LocalCharacter = Cast<ADS1Character>(GetOwningActor())) //캐릭터를 가져옴.
+    {
+        //캐릭터의 상태 컴포넌트에 접근해서 상태를 초기화함. GameplayTag 초기화
+        LocalCharacter->GetStateComponent()->ClearState();
+    }
+}

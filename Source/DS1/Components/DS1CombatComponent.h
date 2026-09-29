@@ -17,6 +17,10 @@ protected:
 	UPROPERTY()
 	ADS1Weapon* MainWeapon;
 	
+	/* 전투 활성화 상태인지? */
+	UPROPERTY(EditAnywhere)
+	bool bCombatEnabled = false;
+	
 public:	
 	UDS1CombatComponent();
 
@@ -28,4 +32,10 @@ public:
 
 public:
 	void SetWeapon(ADS1Weapon* NewWeapon);
+	
+public:
+	FORCEINLINE bool IsCombatEnabled() const { return bCombatEnabled; }
+	FORCEINLINE void SetCombatEnabled(const bool bEnabled) { bCombatEnabled = bEnabled; }
+	
+	FORCEINLINE ADS1Weapon* GetMainWeapon() const { return MainWeapon; };
 };

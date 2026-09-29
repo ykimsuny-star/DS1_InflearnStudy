@@ -12,6 +12,7 @@
 #include "Components/DS1CombatComponent.h"
 #include "Components/DS1AttributeComponent.h"
 #include "Components/DS1StateComponent.h"
+#include "Equipments/DS1Weapon.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interfaces/DS1Interact.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -93,11 +94,16 @@ void ADS1Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
-
+			
+		//질주
 		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Triggered, this, &ThisClass::Sprinting);
 		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Completed, this, &ThisClass::StopSprint);
+		// 구르기
 		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Canceled, this, &ThisClass::Rolling);
+		// 인터렉션
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Interact);
+		// 전투 활성/비활성
+		EnhancedInputComponent->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &ThisClass::ToggleCombat);
 	}
 
 }
@@ -110,8 +116,22 @@ bool ADS1Character::IsMoving() const
 	}
 
 	return false;
-} 
+}
 
+/** 토글을 가능한 상태인지? */
+bool ADS1Character::CanToggleCombat() const
+{
+	check(StateComponent);
+	
+	FGameplayTagContainer CheckTags; //컨테이너 생성
+	CheckTags.AddTag(DS1GameplayTags::Character_State_Attacking); //공격상태 추가 
+	CheckTags.AddTag(DS1GameplayTags::Character_State_Rolling); //구르기 상태 추가
+	CheckTags.AddTag(DS1GameplayTags::Character_State_GeneralAction); //GeneralAction 상태 추가
+	
+	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false; //캐릭터의 현재 상태 들을 비활성화
+}
+
+/** 이동 */
 void ADS1Character::Move(const FInputActionValue& Values)
 {
 	check(StateComponent);
@@ -142,6 +162,7 @@ void ADS1Character::Move(const FInputActionValue& Values)
 	}
 }
 
+/** 카메라 방향 */
 void ADS1Character::Look(const FInputActionValue& Values)
 {
 	FVector2D LookDirection = Values.Get<FVector2D>();
@@ -153,6 +174,7 @@ void ADS1Character::Look(const FInputActionValue& Values)
 	}
 }
 
+/** 질주 */
 void ADS1Character::Sprinting()
 {
 	if (AttributeComponent->CheckHasEnoughStamina(5.f) && IsMoving())
@@ -169,12 +191,14 @@ void ADS1Character::Sprinting()
 	}
 }
 
+/** 질주 중단 */
 void ADS1Character::StopSprint()
 {
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
 	AttributeComponent->ToggleStaminaRegeneration(true);
 }
 
+/** 구르기 */
 void ADS1Character::Rolling()
 {
 	check(AttributeComponent);
@@ -201,6 +225,7 @@ void ADS1Character::Rolling()
 	}
 }
 
+/** 인터렉션(상호작용) */
 void ADS1Character::Interact() //CollisionTrace(콜리전트레이스)를 활용해서 
 { 
 	FHitResult OutHit;
@@ -233,6 +258,37 @@ void ADS1Character::Interact() //CollisionTrace(콜리전트레이스)를 활용
 			if (IDS1Interact* Interaction = Cast<IDS1Interact>(HitActor)) //가지고 온 액터가 만들어진 인터렉트라는 인터페이스를 구현하고 있는지 확인
 			{
 				Interaction->Interact(this); //참이면, Interact 함수를 호출(this)
+			}
+		}
+	}
+}
+
+/** 전투상태 전환 */
+void ADS1Character::ToggleCombat() //바인딩 된 입력을 처리하는 함수
+{
+	check(CombatComponent) // 널 체크
+	check(StateComponent) // null check
+
+	if (CombatComponent)
+	{
+		if (const ADS1Weapon* Weapon = CombatComponent->GetMainWeapon())
+		{
+			if (CanToggleCombat()) // 토글 가능 상태 체크
+			{
+				// 캐릭터의 상태를 Character_State_GeneralAction 상태로 변경
+				StateComponent->SetState(DS1GameplayTags::Character_State_GeneralAction);
+				
+				/** 캐릭터의 전투 활성/비활성 상태에 따른 애니메이션 출력 설정, 
+				 * 전투상태 = 캐릭터가 검을 손에 들고 있는 상태라면, 키 바인딩 하여 검을 등으로 집어넣는 애니메이션 출력
+				 * 비전투상태 = 키 바인딩하여 캐릭터가 등에 있는 검을 손으로 가져오는 애니메이션 출력 */
+				if (CombatComponent->IsCombatEnabled())
+				{
+					PlayAnimMontage(Weapon->GetMontageForTag(DS1GameplayTags::Character_Action_Unequip));
+				}
+				else
+				{
+					PlayAnimMontage(Weapon->GetMontageForTag(DS1GameplayTags::Character_Action_Equip));
+				}
 			}
 		}
 	}
