@@ -14,4 +14,12 @@ class DS1_API UAnimNotify_DS1AttackFinished : public UAnimNotify
 {
 	GENERATED_BODY()
 	
+protected:
+	UPROPERTY(EditAnywhere) //에디터에서 ComboResetDelay을 설정할 수 있도록 노출
+	float ComboResetDelay = 1.f;
+	
+public:
+	UAnimNotify_DS1AttackFinished(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
+	
 };
