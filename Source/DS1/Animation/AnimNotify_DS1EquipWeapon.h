@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
-#include "DS1EquipWeapon.generated.h"
+#include "AnimNotify_DS1EquipWeapon.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DS1_API UDS1EquipWeapon : public UAnimNotify
+class DS1_API UAnimNotify_DS1EquipWeapon : public UAnimNotify
 {
 	GENERATED_BODY()
 	
@@ -20,6 +20,6 @@ protected:
 	FGameplayTag MontageActionTag;
 	
 public:
-	UDS1EquipWeapon(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	UAnimNotify_DS1EquipWeapon(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 };

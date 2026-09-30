@@ -3,11 +3,17 @@
 
 #include "Equipments/DS1Weapon.h"
 
+#include "DS1GameplayTags.h"
 #include "Components/DS1CombatComponent.h"
 #include "Data/DS1MontageActionData.h"
 
 ADS1Weapon::ADS1Weapon()
 {
+	/* 각 공격유형에 따라 필요한 스테미나 소모값 설정 */
+	StaminaCostMap.Add(DS1GameplayTags::Character_Attack_Light, 7.f); 
+	StaminaCostMap.Add(DS1GameplayTags::Character_Attack_Running, 12.f);
+	StaminaCostMap.Add(DS1GameplayTags::Character_Attack_Special, 15.f);
+	StaminaCostMap.Add(DS1GameplayTags::Character_Attack_Heavy, 20.f);
 }
 
 void ADS1Weapon::EquipItem()
@@ -31,4 +37,13 @@ void ADS1Weapon::EquipItem()
 UAnimMontage* ADS1Weapon::GetMontageForTag(const FGameplayTag& Tag, const int32 Index) const
 {
 	return MontageActionData->GetMontageForTag(Tag, Index);
+}
+
+float ADS1Weapon::GetStaminaCost(const FGameplayTag& InTag) const
+{
+	if (StaminaCostMap.Contains(InTag)) //StaminaCostMap 안에 Tag 가 있는지 확인
+	{
+		return StaminaCostMap[InTag]; //확인한 테크 값을 반환(return)
+	}
+	return 0.f;
 }

@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Equipments/DS1Equipment.h"
 #include "DS1Weapon.generated.h"
 
-struct FGameplayTag;
 class UDS1MontageActionData;
 class UDS1CombatComponent;
 /**
@@ -32,6 +32,11 @@ protected:
 	UPROPERTY()
 	UDS1CombatComponent* CombatComponent;
 	
+// 무기의 각 공격상태 마다 소모되는 스테미나 양을 다르게 설정
+protected:
+	UPROPERTY(EditAnywhere)
+	TMap<FGameplayTag, float> StaminaCostMap; //게임플레이 테크를 키값으로, 스테미나 양 = float 값을 정함
+	
 public:
 	ADS1Weapon();
 	
@@ -39,6 +44,9 @@ public:
 	virtual void EquipItem() override;
 	
 	UAnimMontage* GetMontageForTag(const FGameplayTag& Tag, const int32 Index = 0) const;
+	
+	/* 무기의 스테미나 소모값을 받아오는 함수 */
+	float GetStaminaCost(const FGameplayTag& InTag) const;
 	
 	/* 외부에서 참조할수 있도록 Socket 2개 Get */
 	FORCEINLINE FName GetEquipSocketName() const { return EquipSocketName; };

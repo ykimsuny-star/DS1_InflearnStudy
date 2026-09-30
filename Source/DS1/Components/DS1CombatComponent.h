@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
 #include "DS1CombatComponent.generated.h"
 
@@ -21,6 +22,10 @@ protected:
 	UPROPERTY(EditAnywhere)
 	bool bCombatEnabled = false;
 	
+	/* 현재 진행중인 공격 타입을 관리하기 위해, 마지막 AttackType 변수 생성 */
+	UPROPERTY(VisibleAnywhere)
+	FGameplayTag LastAttackType;
+	
 public:	
 	UDS1CombatComponent();
 
@@ -38,4 +43,7 @@ public:
 	FORCEINLINE void SetCombatEnabled(const bool bEnabled) { bCombatEnabled = bEnabled; }
 	
 	FORCEINLINE ADS1Weapon* GetMainWeapon() const { return MainWeapon; };
+	
+	FORCEINLINE FGameplayTag GetLastAttackType() const { return LastAttackType; }; //변수 내용을 확인하기 위해 Getter 생성
+	FORCEINLINE void SetLastAttackType(const FGameplayTag& NewAttackTypeTag) { LastAttackType = NewAttackTypeTag; }; //값을 설정하기 위해 Setter 생성
 };

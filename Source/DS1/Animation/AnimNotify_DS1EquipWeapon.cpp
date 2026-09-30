@@ -1,17 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Animation/DS1EquipWeapon.h"
+#include "Animation/AnimNotify_DS1EquipWeapon.h"
 
 #include "DS1GameplayTags.h"
 #include "Components/DS1CombatComponent.h"
 #include "Equipments/DS1Weapon.h"
 
-UDS1EquipWeapon::UDS1EquipWeapon(const FObjectInitializer& ObjectInitializer)
+UAnimNotify_DS1EquipWeapon::UAnimNotify_DS1EquipWeapon(const FObjectInitializer& ObjectInitializer)
 {
 }
 
-void UDS1EquipWeapon::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+void UAnimNotify_DS1EquipWeapon::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
 	const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);

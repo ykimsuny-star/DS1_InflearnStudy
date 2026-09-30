@@ -54,7 +54,7 @@ public:
 	void DecreaseStamina(float StaminaCost);
 
 	/** 스테미너 재충전/중지 토글 */
-	void ToggleStaminaRegeneration(bool bEnabled, float StartDelay = 2.f);
+	void ToggleStaminaRegeneration(bool bEnabled, float StartDelay = 1.5f);
 
 	/** 스텟 변경을 통지하는 Broadcast Function */
 	void BroadcastAttributeChanged(EDS1AttributeType InAttributeType) const;

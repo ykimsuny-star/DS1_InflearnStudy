@@ -104,6 +104,15 @@ void ADS1Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Interact);
 		// 전투 활성/비활성
 		EnhancedInputComponent->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &ThisClass::ToggleCombat);
+		
+		// Combat 상태로 자동 전환.
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::AutoToggleCombat);
+		// 일반 공격
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Canceled, this, &ThisClass::Attack); //짧게 좌클, Canceled 이벤트;
+		// 특수 공격
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ThisClass::SpecialAttack); //길게 좌클, Triggered 이벤트;
+		// HeavyAttack
+		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, this, &ThisClass::HeavyAttack); //별도의 인풋액션으로 Shift+좌클 로 발동;
 	}
 
 }
@@ -184,6 +193,8 @@ void ADS1Character::Sprinting()
 		GetCharacterMovement()->MaxWalkSpeed = SprintingSpeed;
 
 		AttributeComponent->DecreaseStamina(0.1f);
+		
+		bSprinting = true; // 질주 상태 ON;
 	}
 	else
 	{
@@ -196,6 +207,7 @@ void ADS1Character::StopSprint()
 {
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
 	AttributeComponent->ToggleStaminaRegeneration(true);
+	bSprinting = false; // 질주 상태 OFF;
 }
 
 /** 구르기 */
@@ -292,5 +304,191 @@ void ADS1Character::ToggleCombat() //바인딩 된 입력을 처리하는 함수
 			}
 		}
 	}
+}
+
+void ADS1Character::AutoToggleCombat()
+{
+	if (CombatComponent)
+	{
+		if (!CombatComponent->IsCombatEnabled()) //CombatEnabled 가 false면 (전투상태가 아니면),  
+		{
+			ToggleCombat(); // 전투 상태 전환 ToggleCombat 함수 호출 (검 꺼내기)
+		}
+	}
+}
+
+void ADS1Character::Attack()
+{
+	const FGameplayTag AttackTypeTag = GetAttackPerform(); //GetAttackPerform 함수를 통해 상태 Tag 변경
+
+	if (CanPerformAttack(AttackTypeTag))
+	{
+		ExecuteComboAttack(AttackTypeTag);
+	}
+}
+
+void ADS1Character::SpecialAttack()
+{
+	const FGameplayTag AttackTypeTag = DS1GameplayTags::Character_Attack_Special;
+
+	if (CanPerformAttack(AttackTypeTag))
+	{
+		ExecuteComboAttack(AttackTypeTag);
+	}
+}
+
+void ADS1Character::HeavyAttack()
+{
+	AutoToggleCombat();
+	
+	const FGameplayTag AttackTypeTag = DS1GameplayTags::Character_Attack_Heavy;
+
+	if (CanPerformAttack(AttackTypeTag))
+	{
+		ExecuteComboAttack(AttackTypeTag);
+	}
+}
+
+FGameplayTag ADS1Character::GetAttackPerform() const
+{
+	if (IsSprinting()) // IsSprinting 함수를 통해 질주 중인지 확인하고, 질주 상태라면?
+	{
+		return DS1GameplayTags::Character_Attack_Running; // 질주 공격 상태를 실행
+	}
+	return DS1GameplayTags::Character_Attack_Light; // 일반 공격 상태를 실행
+}
+
+bool ADS1Character::CanPerformAttack(const FGameplayTag& AttackTypeTag) const
+{
+	/* 컴포넌트들 널체크 */
+	check(StateComponent)
+	check(CombatComponent)
+	check(AttributeComponent)
+
+	if (IsValid(CombatComponent->GetMainWeapon()) == false) // 무기를 들고 있는지 체크
+	{
+		return false; //들고 있지 않으면 false 값 반환(함수 탈출)
+	}
+	
+	/* 특정상태의 경우에도 공격을 할 수 없도록 설정 */
+	FGameplayTagContainer CheckTags; 
+	CheckTags.AddTag(DS1GameplayTags::Character_State_Rolling); //구르기 도중 공격 X
+	CheckTags.AddTag(DS1GameplayTags::Character_State_GeneralAction); // 다른 액션 도중에 공격 X
+	
+	const float StaminaCost = CombatComponent->GetMainWeapon()->GetStaminaCost(AttackTypeTag); // 현재 공격타입에 맞는 필요 스테미나 코스트 값을 저장
+	
+	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false // 현재 상태 구르기, 다른 액션 도중 상태가 아니고,
+		&& CombatComponent->IsCombatEnabled() //전투 상태이여야 하며, (무기를 손에 든 상태)
+		&& AttributeComponent->CheckHasEnoughStamina(StaminaCost); //필요 스테미나 만큼의 스테미나를 가지고 있는지 체크
+	//MEMO: 위 조건들을 모두 충족한 상태라면 현재 함수를 (true) 활성화 (반환) 한다.
+}
+
+void ADS1Character::DoAttack(const FGameplayTag& AttackTypeTag)
+{
+	/* 컴포넌트 체크 */
+	check(StateComponent)
+	check(AttributeComponent)
+	check(CombatComponent)
+
+	if (const ADS1Weapon* Weapon = CombatComponent->GetMainWeapon()) //무기 장착한 상태인지 체크
+	{
+		StateComponent->SetState(DS1GameplayTags::Character_State_Attacking); // StateComponent에 현재 상태를 `공격중상태`로 세팅
+		StateComponent->ToggleMovementInput(false); //공격중 이동이 불가능 하도록 이동 입력을 차단함
+		CombatComponent->SetLastAttackType(AttackTypeTag); //CombatComponent에도 현재 `상태 Tag`를 세팅
+		
+		AttributeComponent->ToggleStaminaRegeneration(false); //스테미나 재충전 기능 OFF
+		
+		UAnimMontage* Montage = Weapon->GetMontageForTag(AttackTypeTag, ComboCounter); //콤보 카운트를 키값으로 맞는 애님 몽타주를 찾음
+		if (!Montage)// 콤보 카운트에 맞는 애니메이션을 찾지 못할경우
+		{
+			//콤보 한계 도달.
+			ComboCounter = 0; //콤보 카운트를 0으로 초기화
+			Montage = Weapon->GetMontageForTag(AttackTypeTag, ComboCounter); //다시 애님 몽타주를 찾음
+		}
+		
+		PlayAnimMontage(Montage); // 찾은 애니메이션 몽타주를 실행
+		
+		const float StaminaCost = Weapon->GetStaminaCost(AttackTypeTag); // 현재 무기 사용에 필요한 코스트를 찾아서
+		AttributeComponent->DecreaseStamina(StaminaCost); //스테미나를 소모시킴
+		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f); // 다시 스테미나 재충전을 활성화
+	}
+}
+
+void ADS1Character::ExecuteComboAttack(const FGameplayTag& AttackTypeTag)
+{
+	if (StateComponent->GetCurrentState() != DS1GameplayTags::Character_State_Attacking) // 캐릭터가 현재 `공격중상태` 가 아니라면
+	{
+		if (bComboSequenceRunning && bCanComboInput == false) //ComboResetDelay 시간 중에 입력을 콤보를 입력했다면
+		{
+			//애니메이션은 끝났지만 아직 콤보 시퀀스가 유효할 때 - 추가 입력 기회
+			ComboCounter++;
+			UE_LOG(LogTemp, Warning, TEXT("Additional input : Combo Counter = %d"), ComboCounter);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT(">>> ComboSequence Started <<<"));
+			ResetCombo(); // 콤보 관련 변수 초기화 후
+			bComboSequenceRunning = true; // 콤보시퀀스실행변수 활성
+		}
+		
+		DoAttack(AttackTypeTag); // 현재 콤보 수에 맞는 몽타주를 실행하는 함수
+		GetWorld()->GetTimerManager().ClearTimer(ComboResetTimerHandle);
+	}
+	else if (bCanComboInput)
+	{
+		//콤보 윈도우가 열려 있을 때 - 최적의 타이밍
+		bSavedComboInput = true;
+	}
+}
+
+/* 콤보 관련 변수들을 모두 리셋 */
+void ADS1Character::ResetCombo()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Combo Reset"));
+	
+	bComboSequenceRunning = false;
+	bCanComboInput = false;
+	bSavedComboInput = false;
+	ComboCounter = 0;
+}
+
+//Memo: 에디터에서 몽타주에 배치한 AnimNotify가 실행중일때, 
+void ADS1Character::EnableComboWindow()
+{
+	bCanComboInput = true; //`콤보 입력 가능상태` 변수 활성화
+	UE_LOG(LogTemp, Warning, TEXT("Combo Window Opened: Combo Counter = %d"), ComboCounter);
+}
+
+//Memo: 에디터에서 몽타주에 배치한 AnimNotify가 끝나면,
+void ADS1Character::DisableComboWindow()
+{
+	check(CombatComponent)
+	 
+	bCanComboInput = false; //`콤보 입력 가능상태` 변수 비활성화
+
+	if (bSavedComboInput) //`콤보 입력 가능상태` 일때, 콤보를 입력했다면 
+	{
+		bSavedComboInput = false; //입력하지 않은 상태로 바꾸고
+		ComboCounter++; //콤보 카운터를 1씩 증가
+		UE_LOG(LogTemp, Warning, TEXT("Combo Window Closed: Advancing to next combo = %d"), ComboCounter);
+		DoAttack(CombatComponent->GetLastAttackType()); //증가한 카운터 수의 콤보를 이어서 실행
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Combo Window Closed: No input received")); 
+	}
+}
+
+//Memo: AnimNotify 실행중인동안 입력하지 못해도 끝부분에 입력 기회를 주고, 공격이 끝나면 다시 캐릭터가 이동할 수 있는 상태로 전환 (몽타주 끝부분에 배치)
+void ADS1Character::AttackFinished(const float ComboResetDelay)
+{
+	UE_LOG(LogTemp, Warning, TEXT("AttackFinished"));
+	if (StateComponent)
+	{
+		StateComponent->ToggleMovementInput(true); //캐릭터가 이동이 가능하도록 입력을 활성화
+	}
+	// ComboResetDelay 후에 콤보 시퀀스 종료
+	GetWorld()->GetTimerManager().SetTimer(ComboResetTimerHandle, this, &ThisClass::ResetCombo, ComboResetDelay, false);
+	//Memo: float 매개변수 ComboResetDelay 만큼 시간이 지난 후에 콤보를 리셋 해서, 처음부터 다시 콤보를 시작하게 설정
 }
 
