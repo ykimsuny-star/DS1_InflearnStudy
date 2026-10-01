@@ -18,6 +18,7 @@ Saved/
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
+*.DotSettings.user
 *.code-workspace
 
 # Local editor content

@@ -3,6 +3,9 @@
 
 #include "Components/DS1AttributeComponent.h"
 
+#include "DS1GameplayTags.h"
+#include "DS1StateComponent.h"
+
 UDS1AttributeComponent::UDS1AttributeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -43,7 +46,7 @@ void UDS1AttributeComponent::ToggleStaminaRegeneration(bool bEnabled, float Star
 		if (GetWorld()->GetTimerManager().IsTimerActive(StaminaRegenTimerHandle) == false)
 		{
 			GetWorld()->GetTimerManager().SetTimer(StaminaRegenTimerHandle, this, &ThisClass::RegenerateStaminaHandler, 0.1f, true, StartDelay);
-		}
+		} //딜레이 시간 후 회복하는 주기 - 0.1초에 1번씩 회복
 	}
 	else
 	{
@@ -68,6 +71,29 @@ void UDS1AttributeComponent::BroadcastAttributeChanged(EDS1AttributeType InAttri
 		}
 
 		OnAttributeChanged.Broadcast(InAttributeType, Ratio);
+	}
+}
+
+void UDS1AttributeComponent::TakeDamageAmount(float DamageAmount)
+{
+	//체력 차감
+	BaseHealth = FMath::Clamp(BaseHealth - DamageAmount, 0.f, MaxHealth); //들어온 데미지 만큼 체력에서 감소
+	
+	BroadcastAttributeChanged(EDS1AttributeType::Health); //체력이 깍였다고 브로드 캐스팅
+
+	if (BaseHealth <= 0.f) //체력이 0이하로 떨어지면
+	{
+		//Call Death Delegate - 죽음을 알림
+		if (OnDeath.IsBound())
+		{
+			OnDeath.Broadcast();			
+		}
+		
+		//Set Death State
+		if (UDS1StateComponent* StateComp = GetOwner()->FindComponentByClass<UDS1StateComponent>())
+		{
+			StateComp->SetState(DS1GameplayTags::Character_State_Death); //캐릭터를 `죽음`상태로 변경
+		}
 	}
 }
 
